@@ -127,7 +127,7 @@ class IntegralDomain(Domain):
 
   def is_a_member(self, point):
     """ Returns true if point is in the domain. """
-    are_ints = [isinstance(x, (int, np.int, np.int64)) for x in point]
+    are_ints = [isinstance(x, (int, np.int, np.int32, np.int64)) for x in point]
     return all(are_ints) and is_within_bounds(self.bounds, point)
 
   def members_are_equal(self, point_1, point_2):
