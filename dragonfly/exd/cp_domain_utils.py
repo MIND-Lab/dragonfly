@@ -523,8 +523,10 @@ def get_processed_func_from_raw_func_for_cp_domain(raw_func, cp_domain,
   def _eval_func_x_after_unpacking(x, _raw_func, _cp_domain, _index_ordering,
                                    _dim_ordering):
     """ Evaluates the function after processing it. """
-    return _raw_func(get_raw_point_from_processed_point(x, _cp_domain, _index_ordering,
-                                                        _dim_ordering))
+
+    sorted_x = get_raw_point_from_processed_point(x, _cp_domain, _index_ordering,
+                                                        _dim_ordering)
+    return _raw_func({v: k for k, v in zip(sorted_x, _cp_domain.raw_name_ordering)})
   # This function returns the raw function
   def _get_processed_func(_raw_func, _cp_domain, _index_ordering, _dim_ordering):
     """ Returns a function which evaluates raw_func from a packed input. """
