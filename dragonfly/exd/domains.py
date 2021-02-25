@@ -105,6 +105,47 @@ class EuclideanDomain(Domain):
     return 'Euclidean: %s'%(_get_bounds_as_str(self.bounds))
 
 
+
+# Euclidean spaces ---------
+class LogEuclideanDomain(Domain):
+  """ Domain for Log Euclidean spaces. """
+
+  def __init__(self, bounds):
+    """ Constructor. """
+    _check_if_valid_euc_int_bounds(bounds)
+    self.bounds = np.array(bounds)
+    self.diameter = np.linalg.norm(self.bounds[:, 1] - self.bounds[:, 0])
+    self.dim = len(bounds)
+    super(LogEuclideanDomain, self).__init__()
+
+  def get_type(self):
+    """ Returns the type of the domain. """
+    return 'log_euclidean'
+
+  def get_dim(self):
+    """ Return the dimensions. """
+    return self.dim
+
+  def is_a_member(self, point):
+    """ Returns true if point is in the domain. """
+    return is_within_bounds(self.bounds, point)
+
+  def members_are_equal(self, point_1, point_2):
+    """ Compares two members and returns True if they are the same. """
+    return self.compute_distance(point_1, point_2) < 1e-8 * self.diameter
+
+  @classmethod
+  def compute_distance(cls, point_1, point_2):
+    """ Computes the distance between point_1 and point_2. """
+    return np.linalg.norm(np.array(point_1) - np.array(point_2))
+
+  def __str__(self):
+    """ Returns a string representation. """
+    return 'Log-Euclidean: %s'%(_get_bounds_as_str(self.bounds))
+
+
+
+
 # Integral spaces ------------
 class IntegralDomain(Domain):
   """ Domain for vector valued integers. """

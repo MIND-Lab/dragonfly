@@ -64,6 +64,15 @@ def _preprocess_domain_parameters(domain_parameters, var_prefix='var_'):
         else:
           var_dict['min'] = var_dict['bounds'][0]
           var_dict['max'] = var_dict['bounds'][1]
+    if var_dict['type'] in ['float_log']:
+      if not ('min' in var_dict.keys() and 'max' in var_dict.keys()):
+        if not 'bounds' in var_dict.keys():
+          raise ValueError('Specify bounds or min and max for float ' +
+                           'variables in logarithmic scale: %s.'%(var_dict))
+        else:
+          var_dict['min'] = np.log(var_dict['bounds'][0])
+          var_dict['max'] = np.log(var_dict['bounds'][1])
+
     if var_dict['type'] == 'discrete_numeric':
       if 'items' not in var_dict.keys():
         raise ValueError('Specify items for discrete_numeric variables.')
@@ -165,7 +174,7 @@ def load_cp_domain_from_config_file(config_file, *args, **kwargs):
 
 def load_domain_from_params(domain_params,
       general_euclidean_kernel='', general_integral_kernel='',
-      general_discrete_kernel='', general_discrete_numeric_kernel='',
+      general_discrete_kernel='', general_discrete_numeric_kernel='',general_log_kernel='',
       domain_constraints=None, domain_info=None):
   """ Loads and creates a cartesian product object from a config_file. """
   # pylint: disable=too-many-branches
@@ -174,6 +183,8 @@ def load_domain_from_params(domain_params,
   list_of_domains = []
   general_euclidean_bounds = []
   general_euclidean_idxs = []
+  general_log_bounds = []
+  general_log_idxs = []
   general_integral_bounds = []
   general_integral_idxs = []
   general_discrete_items_list = []
@@ -186,7 +197,7 @@ def load_domain_from_params(domain_params,
   # iterate over the loop
   for idx, param in enumerate(domain_params):
     raw_name_ordering.append(param['name'])
-    if param['type'] in ['float', 'int']:
+    if param['type'] in ['float', 'int', 'float_log']:
       bound_dim = 1 if param['dim'] == '' else param['dim']
       curr_bounds = [[param['min'], param['max']]] * bound_dim
     elif param['type'] in ['discrete', 'discrete_numeric', 'boolean',
@@ -204,6 +215,13 @@ def load_domain_from_params(domain_params,
         general_euclidean_idxs.append(idx)
       else:
         list_of_domains.append(domains.EuclideanDomain(curr_bounds))
+        index_ordering.append(idx)
+    elif param['type']  == 'float_log':
+      if param['kernel'] == '':
+        general_log_bounds.extend(curr_bounds)
+        general_log_idxs.append(idx)
+      else:
+        list_of_domains.append(domains.LogEuclideanDomain(curr_bounds))
         index_ordering.append(idx)
     elif param['type'] == 'int':
       if param['kernel'] == '':
@@ -250,6 +268,15 @@ def load_domain_from_params(domain_params,
     dim_ordering.append(general_euclidean_dims)
     index_ordering.append(general_euclidean_idxs)
     kernel_ordering.append(general_euclidean_kernel)
+  if len(general_log_bounds) > 0:
+    list_of_domains.append(domains.LogEuclideanDomain(general_log_bounds))
+    general_log_names = [domain_params[idx]['name'] for idx in
+                               general_log_idxs]
+    general_log_dims = [domain_params[idx]['dim'] for idx in general_log_idxs]
+    name_ordering.append(general_log_names)
+    dim_ordering.append(general_log_dims)
+    index_ordering.append(general_log_idxs)
+    kernel_ordering.append(general_log_kernel)
   if len(general_integral_bounds) > 0:
     list_of_domains.append(domains.IntegralDomain(general_integral_bounds))
     general_integral_names = [domain_params[idx]['name'] for idx in general_integral_idxs]
@@ -332,7 +359,7 @@ def get_processed_point_from_raw_point(raw_x, cp_domain, index_ordering, dim_ord
         curr_elem = flatten_list_of_objects_and_iterables(curr_elem)
         packed_x[idx] = curr_elem
       elif dim_ordering[idx] == '' and (cp_domain.list_of_domains[idx].get_type() in \
-                     ['euclidean', 'integral', 'prod_discrete', 'prod_discrete_numeric']):
+                     ['euclidean', 'log_euclidean', 'integral', 'prod_discrete', 'prod_discrete_numeric']):
         packed_x[idx] = [raw_x[idx_order]]
       else:
         packed_x[idx] = raw_x[idx_order]
@@ -349,7 +376,10 @@ def get_raw_point_from_processed_point(proc_x, cp_domain, index_ordering, dim_or
       if cp_domain.list_of_domains[idx].get_type() == 'discrete_euclidean':
         repacked_x.append([proc_x[idx]])
       elif isinstance(raw_dim, list):
-        repacked_x.append(_unpack_vectorised_domain(proc_x[idx], raw_dim))
+        if cp_domain.list_of_domains[idx].get_type() == 'log_euclidean':
+          repacked_x.append(np.exp(_unpack_vectorised_domain(proc_x[idx], raw_dim)))
+        else:
+          repacked_x.append(_unpack_vectorised_domain(proc_x[idx], raw_dim))
       elif raw_dim == '':
         repacked_x.append(proc_x[idx])
       else:
@@ -462,6 +492,9 @@ def sample_from_cp_domain_without_constraints(cp_domain, num_samples,
       if dom.get_type() == 'euclidean':
         curr_domain_samples = random_sample_from_euclidean_domain(dom.bounds, num_samples,
                                                                   euclidean_sample_type)
+      if dom.get_type() == 'log_euclidean':
+        curr_domain_samples = random_sample_from_euclidean_domain(dom.bounds, num_samples,
+                                                                  euclidean_sample_type)
       elif dom.get_type() == 'discrete_euclidean':
         curr_domain_samples = random_sample_from_discrete_euclidean_domain(
                                 dom.list_of_items, num_samples,
@@ -526,7 +559,7 @@ def get_processed_func_from_raw_func_for_cp_domain(raw_func, cp_domain,
 
     sorted_x = get_raw_point_from_processed_point(x, _cp_domain, _index_ordering,
                                                         _dim_ordering)
-    return _raw_func({v: k for k, v in zip(sorted_x, _cp_domain.raw_name_ordering)})
+    return _raw_func({v:k for k,v in zip(sorted_x, _cp_domain.raw_name_ordering)})
   # This function returns the raw function
   def _get_processed_func(_raw_func, _cp_domain, _index_ordering, _dim_ordering):
     """ Returns a function which evaluates raw_func from a packed input. """

@@ -134,15 +134,15 @@ def load_parameter(parameter, key=None):
   param['kernel'] = unicode_to_str(_kernel)
   param['type'] = unicode_to_str(_type).lower()
   # First for regular domains
-  if param['type'] in ['float', 'int', 'discrete', 'discrete_numeric', 'boolean']:
+  if param['type'] in ['float', 'int', 'discrete', 'discrete_numeric', 'boolean', 'float_log']:
     if not isinstance(_dim, Number):
       _dim = unicode_to_str(_dim)
     if _dim != "":
       _dim = int(_dim)
     param['dim'] = _dim
-    if param['type'] in ['float', 'int']:
-      param['min'] = _min
-      param['max'] = _max
+    if param['type'] in ['float', 'int', 'float_log']:
+      param['min'] = np.log(_min)
+      param['max'] = np.log(_max)
     elif param['type'] == 'discrete':
       if _items == '':
         raise ValueError('List of items required')

@@ -109,6 +109,8 @@ def get_default_mutation_op(dom):
   """ Returns the default mutation operator for the domain. """
   if dom.get_type() == 'euclidean':
     return lambda x: euclidean_gauss_mutation(x, dom.bounds)
+  elif dom.get_type() == 'log_euclidean':
+    return lambda x: euclidean_gauss_mutation(x, dom.bounds)
   elif dom.get_type() == 'integral':
     return lambda x: integral_gauss_mutation(x, dom.bounds)
   elif dom.get_type() == 'discrete':

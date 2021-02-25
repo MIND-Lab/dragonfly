@@ -75,7 +75,7 @@ def multiobjective_maximise_functions(funcs, domain, max_capital, opt_method='bo
   else:
     raise ValueError(_FUNC_FORMAT_ERR_MSG)
   # Load arguments depending on domain type
-  if domain.get_type() == 'euclidean':
+  if domain.get_type() in ['euclidean', 'log_euclidean']:
     multi_func_caller = EuclideanMultiFunctionCaller(mfc_funcs_arg, domain,
                                                      vectorised=False, config=config)
   else:
