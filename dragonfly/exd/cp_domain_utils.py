@@ -18,12 +18,12 @@ from warnings import warn
 from . import domains
 from ..parse.config_parser import config_parser
 from ..utils.general_utils import flatten_list_of_objects_and_iterables, \
-  get_original_order_from_reordered_list, \
-  transpose_list_of_lists
+    get_original_order_from_reordered_list, \
+    transpose_list_of_lists
 from ..utils.oper_utils import random_sample_from_euclidean_domain, \
-  random_sample_from_discrete_euclidean_domain, \
-  random_sample_from_integral_domain, \
-  random_sample_from_prod_discrete_domain
+    random_sample_from_discrete_euclidean_domain, \
+    random_sample_from_integral_domain, \
+    random_sample_from_prod_discrete_domain
 
 
 def _process_fidel_to_opt(raw_fidel_to_opt, fidel_space, fidel_space_orderings,
@@ -498,7 +498,7 @@ def sample_from_cp_domain_without_constraints(cp_domain, num_samples,
             if dom.get_type() == 'euclidean':
                 curr_domain_samples = random_sample_from_euclidean_domain(dom.bounds, num_samples,
                                                                           euclidean_sample_type)
-            if dom.get_type() == 'log_euclidean':
+            elif dom.get_type() == 'log_euclidean':
                 curr_domain_samples = random_sample_from_euclidean_domain(dom.bounds, num_samples,
                                                                           euclidean_sample_type)
             elif dom.get_type() == 'discrete_euclidean':
