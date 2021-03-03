@@ -11,11 +11,11 @@ from argparse import Namespace
 
 # Local imports
 from .cp_domain_utils import get_processed_from_raw_via_config, \
-  get_raw_from_processed_via_config, \
-  sample_from_cp_domain
+    get_raw_from_processed_via_config, \
+    sample_from_cp_domain
 from ..utils.general_utils import map_to_bounds, flatten_list_of_lists
 from ..utils.oper_utils import direct_ft_maximise, latin_hc_sampling, pdoo_maximise, \
-  random_maximise
+    random_maximise
 
 # Define constants
 EVAL_ERROR_CODE = 'eval_error_250320181729'
@@ -387,6 +387,23 @@ def postprocess_data_to_save_for_domain(data_to_save, experiment_caller):
             try:
                 data_to_save['config_points'] = [get_raw_from_processed_via_config(pt, config)
                                                  for pt in data_to_save['points']]
+                if experiment_caller.config.domain.get_type() == 'euclidean' or experiment_caller.config.domain.get_type() == 'log_euclidean':
+                    data_to_save['raw_points'] = [get_raw_from_processed_via_config(pt, config)
+                                                  for pt in map_to_bounds(data_to_save['points'],
+                                                                          experiment_caller.config.domain.bounds)]
+                else:
+                    data_to_save_points = []
+                    for i, d in enumerate(experiment_caller.config.domain.list_of_domains):
+                        if d.get_type() == 'euclidean' or d.get_type() == 'log_euclidean':
+                            new_points = [p[i] for p in data_to_save['points']]
+                            raw_points = map_to_bounds(new_points, d.bounds)
+                            data_to_save_points.append(raw_points)
+                        else:
+                            data_to_save_points.append([p[i] for p in data_to_save['points']])
+                    data_to_save['raw_points'] = [get_raw_from_processed_via_config(pt, config) for pt in
+                                                  list(map(list, zip(*data_to_save_points)))]
+
+
             except:
                 pass
         if 'fidels' in data_to_save:

@@ -19,7 +19,7 @@ from argparse import Namespace
 # Local imports
 from .exd_utils import EVAL_ERROR_CODE
 from .exd_utils import postprocess_data_to_save_for_domain, \
-  preprocess_loaded_data_for_domain
+    preprocess_loaded_data_for_domain
 from ..utils.option_handler import get_option_specs
 from ..utils.reporters import get_reporter
 
@@ -357,6 +357,7 @@ class ExperimentDesigner(object):
                                 self.get_curr_spent_capital(), cap_frac))
                             break
                         self._dispatch_single_experiment_to_worker_manager(qinfo)
+                self._save_progress_to_file()
             else:
                 num_init_evals = int(self.options.num_init_evals)
                 if num_init_evals > 0:
@@ -370,6 +371,7 @@ class ExperimentDesigner(object):
                             self.step_idx += 1
                             self._wait_for_a_free_worker()
                             self._dispatch_single_experiment_to_worker_manager(qinfo)
+                self._save_progress_to_file()
 
     def _load_prev_evaluations_data_from_file(self):
         """ Load data from a prior file. """
